@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+    <Button
+        android:id="@+id/start_record"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="开始录制" />
+
+    <Button
+        android:id="@+id/stop_record"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="停止录制" />
+
+
+    <Button
+        android:id="@+id/convert_to_wav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="转换为wav" />
+
+    <Button
+        android:id="@+id/play"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="播放录制的PCM (MODE_STATIC)" />
+
+
+    <Button
+        android:id="@+id/play_stream"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="循环播放录制的PCM (MODE_STREAM)" />
+
+    <Button
+        android:id="@+id/stop_stream"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="停止播放 (MODE_STREAM)" />
+
+    <TextView
+        android:id="@+id/state"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:textColor="#f00" />
+
+</LinearLayout>
