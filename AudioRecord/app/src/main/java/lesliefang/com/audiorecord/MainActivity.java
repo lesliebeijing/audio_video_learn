@@ -38,7 +38,6 @@ public class MainActivity extends AppCompatActivity {
     final int sampleRateInHz = 44100;
     final int channelConfig = AudioFormat.CHANNEL_IN_MONO;
     final int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
-    int audioRecordBufferSize;
 
     boolean isRecording = false;
     AudioRecord audioRecord;
@@ -75,13 +74,15 @@ public class MainActivity extends AppCompatActivity {
         btnStartRecord.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                audioRecordBufferSize = AudioRecord.getMinBufferSize(sampleRateInHz, channelConfig, audioFormat);
-                audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, sampleRateInHz, channelConfig, audioFormat, audioRecordBufferSize);
-                audioRecord.startRecording();
-                isRecording = true;
-                tvState.setText("录制中...");
+                int bufferSize = AudioRecord.getMinBufferSize(sampleRateInHz, channelConfig, audioFormat);
+                audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, sampleRateInHz, channelConfig, audioFormat, bufferSize);
+                if (audioRecord.getState() == AudioRecord.STATE_INITIALIZED) {
+                    audioRecord.startRecording();
+                    isRecording = true;
+                    tvState.setText("录制中...");
 
-                new Thread(new RecordRunnable()).start();
+                    new Thread(new RecordRunnable(bufferSize)).start();
+                }
             }
         });
 
@@ -144,9 +145,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     class RecordRunnable implements Runnable {
+        int bufferSize;
+
+        RecordRunnable(int bufferSize) {
+            this.bufferSize = bufferSize;
+        }
+
         @Override
         public void run() {
-            byte[] data = new byte[audioRecordBufferSize];
+            byte[] data = new byte[bufferSize];
             FileOutputStream out = null;
             try {
                 out = new FileOutputStream(pcmFile);
@@ -160,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
 
             try {
                 while (isRecording) {
-                    int len = audioRecord.read(data, 0, audioRecordBufferSize);
+                    int len = audioRecord.read(data, 0, bufferSize);
                     out.write(data, 0, len);
                 }
             } catch (IOException e) {
