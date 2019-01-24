@@ -100,17 +100,19 @@ public class MainActivity extends AppCompatActivity {
         mediaCodec.setCallback(new MediaCodec.Callback() {
             @Override
             public void onInputBufferAvailable(@NonNull MediaCodec codec, int index) {
+                // input buffer 用完后要及时提交（queueInputBuffer）到 codec ,否则可能导致 input buffer 被占满
                 Log.d(TAG, "onInputBufferAvailable");
                 byte[] data = null;
                 if (isRecording) {
                     try {
-                        data = inputQueue.take();
+                        data = inputQueue.take(); // 阻塞方法，不要过多的 take, 队列为空时 take 会阻塞
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 } else {
-                    data = inputQueue.poll();
+                    // 录制结束后如果队列非空要处理完队列中的剩余数据
                     Log.d(TAG, "11111111111111111 " + inputQueue.size());
+                    data = inputQueue.poll();
                 }
 
                 if (data != null) {
@@ -129,13 +131,15 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onOutputBufferAvailable(@NonNull MediaCodec codec, int index, @NonNull MediaCodec.BufferInfo info) {
-                Log.d(TAG, "codec 出队 " + Thread.currentThread().getName());
+                // output buffer 用完后要及时释放（releaseOutputBuffer）回 codec, 否则可能导致 output buffer 被占满
+                Log.d(TAG, "codec 出队 " + Thread.currentThread().getName() + " size " + info.size + " flag " + info.flags);
                 ByteBuffer outputBuffer = codec.getOutputBuffer(index);
                 byte[] outData = new byte[info.size];
                 outputBuffer.get(outData);
                 codec.releaseOutputBuffer(index, false);
 
                 try {
+                    Log.d(TAG, "outputQueue 等待入队");
                     outputQueue.put(outData);
                     Log.d(TAG, "outputQueue 入队");
                 } catch (InterruptedException e) {
@@ -188,6 +192,7 @@ public class MainActivity extends AppCompatActivity {
                 System.arraycopy(buffer, 0, data, 0, len);
 
                 try {
+                    Log.d(TAG, "inputQueue 等待入队");
                     inputQueue.put(data); // 阻塞方法
                     Log.d(TAG, "inputQueue 入队了");
                 } catch (InterruptedException e) {
@@ -221,10 +226,15 @@ public class MainActivity extends AppCompatActivity {
             try {
                 byte[] header = new byte[7];
                 while (true) {
+                    Log.d(TAG, "write thread running");
                     byte[] data;
                     if (!isCodecComplete) {
-                        data = outputQueue.take();
+                        Log.d(TAG, "outputQueue 等待出队");
+                        data = outputQueue.take(); // 阻塞方法，不要过多的 take, 否则线程会阻塞无法退出
+                        Log.d(TAG, "outputQueue 出队");
                     } else {
+                        // codec 结束后如果队列非空要处理完队列中的剩余数据
+                        Log.d(TAG, "222222222222222222 " + inputQueue.size());
                         data = outputQueue.poll();
                     }
 

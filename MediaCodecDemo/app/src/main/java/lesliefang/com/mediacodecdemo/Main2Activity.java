@@ -149,7 +149,7 @@ public class Main2Activity extends AppCompatActivity {
                 byte[] data = inputQueue.poll();
                 if (data != null) {
                     // 只要有数据就放入 codec (无论录制是否结束)
-                    // 没有数据时不要在循环中一直 dequeueInputBuffer ，这样会导致后面一直返回 -1
+                    // dequeueInputBuffer 后要及时提交（queueInputBuffer）到 codec，否则 input buffer 用尽后 dequeueInputBuffer 会一直返回 -1
                     int inputBufferId = mediaCodec.dequeueInputBuffer(1000);
                     Log.d(TAG, "inputBufferId " + inputBufferId);
                     if (inputBufferId >= 0) {
@@ -177,6 +177,7 @@ public class Main2Activity extends AppCompatActivity {
                     Log.d(TAG, "inputQueue 为空。。。");
                 }
 
+                // dequeueOutputBuffer 用完后要及时 releaseOutputBuffer ，否则 out buffer 会用尽后 dequeueOutputBuffer 会一直返回 -1
                 int outputBufferId = mediaCodec.dequeueOutputBuffer(bufferInfo, 1000);
                 Log.d(TAG, "outputBufferId " + outputBufferId);
                 if (outputBufferId >= 0) {
@@ -184,7 +185,7 @@ public class Main2Activity extends AppCompatActivity {
                     byte[] outData = new byte[bufferInfo.size];
                     outputBuffer.get(outData);
                     mediaCodec.releaseOutputBuffer(outputBufferId, false);
-                    Log.d(TAG, "codec 出队");
+                    Log.d(TAG, "codec 出队 size " + bufferInfo.size + " flag " + bufferInfo.flags);
 
                     if (outputQueue.size() == QUEUE_SIZE) {
                         try {
